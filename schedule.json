@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "video_url": "https://github.com/YOUR_USERNAME/insta-scheduler/releases/download/v1.0.0/my-first-reel.mp4",
+    "caption": "Automated post from GitHub Actions! 🚀 #reels",
+    "scheduled_time": "2026-08-05T14:00:00",
+    "posted": false
+  }
+]
