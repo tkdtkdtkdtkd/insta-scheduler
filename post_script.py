@@ -47,9 +47,11 @@ def publish_reel(video_url, caption):
     
     return pub_result['id']
 
+from datetime import datetime, timezone
+
 def main():
     schedule = load_schedule()
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     updated = False
 
     for item in schedule:
