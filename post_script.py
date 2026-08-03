@@ -1,7 +1,8 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import requests
+import time
 
 # Load secrets from GitHub environment variables
 ACCESS_TOKEN = os.environ.get("META_ACCESS_TOKEN")
@@ -33,6 +34,21 @@ def publish_reel(video_url, caption):
         raise Exception(f"Container creation failed: {result}")
     
     creation_id = result['id']
+
+    # Step 1.5: Wait for container to be ready
+    print(f"Waiting for Meta to process the video (Container ID: {creation_id})...")
+    status_url = f"https://graph.facebook.com/v21.0/{creation_id}?fields=status_code&access_token={ACCESS_TOKEN}"
+    for _ in range(12): # Wait up to 3 minutes (12 * 15 seconds)
+        status_res = requests.get(status_url).json()
+        status = status_res.get("status_code")
+        if status == "FINISHED":
+            print("Video processed successfully!")
+            break
+        elif status == "ERROR":
+            raise Exception("Meta video processing failed.")
+        time.sleep(15)
+    else:
+        raise Exception("Timed out waiting for Meta to process the video.")
 
     # Step 2: Publish Container
     publish_url = f"https://graph.facebook.com/v21.0/{IG_USER_ID}/media_publish"
