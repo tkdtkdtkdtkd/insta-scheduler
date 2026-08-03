@@ -2,8 +2,15 @@
   {
     "id": 1,
     "video_url": "https://github.com/YOUR_USERNAME/insta-scheduler/releases/download/v1.0.0/my-first-reel.mp4",
-    "caption": "Automated post from GitHub Actions! 🚀 #reels",
+    "caption": "Automated post from GitHub Actions! \ud83d\ude80 #reels",
     "scheduled_time": "2026-08-05T14:00:00",
+    "posted": false
+  },
+  {
+    "id": 2,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d150930/Marvel.s.Spider-Man.Miles.Morales.PS5.Pro.Web.Swing.-.1080p.mp4",
+    "caption": "gameplay",
+    "scheduled_time": "2026-08-03T15:11:00",
     "posted": false
   }
 ]
