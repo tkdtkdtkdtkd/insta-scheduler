@@ -57,6 +57,10 @@ def main():
     for item in schedule:
         if not item["posted"]:
             target_time = datetime.fromisoformat(item["scheduled_time"])
+            if target_time.tzinfo is None:
+                from datetime import timedelta
+                target_time = target_time.replace(tzinfo=timezone(timedelta(hours=5, minutes=30)))
+            
             # If current time has reached or passed the scheduled time
             if now >= target_time:
                 print(f"Publishing post ID {item['id']}...")
