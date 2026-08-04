@@ -1,8 +1,11 @@
-fastapi
-uvicorn
-python-multipart
+Flask
+edge-tts
+pydub
 requests
 python-dotenv
-google-api-python-client
-google-auth-oauthlib
-google-auth-httplib2
+proglog
+moviepy
+openai-whisper
+librosa
+numpy
+werkzeug

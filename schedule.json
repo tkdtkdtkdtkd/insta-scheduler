@@ -2,7 +2,7 @@
   {
     "id": 1,
     "video_url": "https://github.com/YOUR_USERNAME/insta-scheduler/releases/download/v1.0.0/my-first-reel.mp4",
-    "caption": "Automated post from GitHub Actions! \ud83d\ude80 #reels",
+    "caption": "Automated post from GitHub Actions! 🚀 #reels",
     "scheduled_time": "2026-08-05T14:00:00+05:30",
     "posted": false
   },
@@ -13,5 +13,14 @@
     "scheduled_time": "2026-08-03T15:11:00+05:30",
     "posted": true,
     "youtube_posted": true
+  },
+  {
+    "id": 3,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d002719/lyric_video_9_16_b9abca8d.mp4",
+    "caption": "im so awesome",
+    "scheduled_time": "2026-08-05T00:24:00+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]

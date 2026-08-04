@@ -1,23 +1,50 @@
 import os
+import io
+import asyncio
+import uuid
+import traceback
 import json
 import shutil
 import subprocess
 from datetime import datetime
-from fastapi import FastAPI, Form, UploadFile, File, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from flask import Flask, request, render_template, send_file, jsonify, redirect, url_for
+from werkzeug.utils import secure_filename
+import edge_tts
+from pydub import AudioSegment
+from pydub.silence import split_on_silence
 import requests
 from dotenv import load_dotenv
 
+from analyze_audio import analyze_audio
+from generate_timestamps import generate_timestamps
+from render_video import create_lyric_video
+from proglog import ProgressBarLogger
+
 load_dotenv()
 
-app = FastAPI()
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['GENERATED_FOLDER'] = 'generated'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['GENERATED_FOLDER'], exist_ok=True)
 
-UPLOAD_DIR = "uploads"
 SCHEDULE_FILE = "schedule.json"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
 GITHUB_PAT = os.environ.get("GITHUB_PAT")
 GITHUB_REPO = os.environ.get("GITHUB_REPO")
+
+# Global progress state
+generation_progress = {
+    "status": "Idle",
+    "percent": 0
+}
+
+class MyBarLogger(ProgressBarLogger):
+    def bars_callback(self, bar, attr, value, old_value=None):
+        if bar == 't':
+            total = self.bars[bar].get('total', 1)
+            percent = int((value / total) * 70) + 30
+            generation_progress['status'] = f"Rendering Video: {int((value/total)*100)}%"
+            generation_progress['percent'] = percent
 
 def load_schedule():
     if not os.path.exists(SCHEDULE_FILE):
@@ -34,115 +61,169 @@ def get_next_id(schedule):
         return 1
     return max(item["id"] for item in schedule) + 1
 
-@app.get("/", response_class=HTMLResponse)
-def read_root():
-    schedule = load_schedule()
-    # Sort so newest times are first or latest first
-    schedule = sorted(schedule, key=lambda x: x["scheduled_time"], reverse=True)
+async def _generate_audio_bytes(text, voice, rate, remove_silence):
+    communicate = edge_tts.Communicate(text, voice, rate=rate)
+    audio_data = io.BytesIO()
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            audio_data.write(chunk["data"])
+    audio_data.seek(0)
     
-    html_content = f"""
-    <html>
-    <head>
-        <title>Insta-Scheduler Admin</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-slate-50 p-8 min-h-screen font-sans">
-        <div class="max-w-5xl mx-auto">
-            <h1 class="text-4xl font-extrabold text-slate-800 mb-2">Insta-Scheduler Control Center</h1>
-            <p class="text-slate-500 mb-8">Upload here, and let GitHub Actions do the background posting for free.</p>
+    try:
+        audio = AudioSegment.from_mp3(audio_data)
+        
+        if remove_silence:
+            chunks = split_on_silence(audio, min_silence_len=100, silence_thresh=-45, keep_silence=40)
+            if chunks:
+                audio = AudioSegment.empty()
+                for chunk in chunks:
+                    audio += chunk
+                    
+        # Overlay Background Music
+        MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "music")
+        if os.path.exists(MUSIC_DIR):
+            import random
+            music_files = [f for f in os.listdir(MUSIC_DIR) if f.endswith('.mp3')]
+            if music_files:
+                chosen_music = random.choice(music_files)
+                music_path = os.path.join(MUSIC_DIR, chosen_music)
+                try:
+                    bg_music = AudioSegment.from_mp3(music_path)
+                    speech_len = len(audio)
+                    music_len = len(bg_music)
+                    
+                    if music_len > speech_len:
+                        bg_chunk = bg_music[:speech_len]
+                    else:
+                        bg_chunk = bg_music * (speech_len // music_len + 1)
+                        bg_chunk = bg_chunk[:speech_len]
+                        
+                    from pydub.effects import compress_dynamic_range
+                    bg_chunk = compress_dynamic_range(bg_chunk, threshold=-20.0, ratio=4.0)
+                        
+                    target_dbfs = -30.0
+                    if "luminary" in chosen_music.lower():
+                        target_dbfs = -35.0
+                        
+                    current_dbfs = bg_chunk.dBFS
+                    if current_dbfs != float('-inf'):
+                        gain = target_dbfs - current_dbfs
+                        bg_chunk = bg_chunk + gain
+                    
+                    audio = bg_chunk.overlay(audio)
+                except Exception as music_err:
+                    print(f"Warning: Failed to add music: {music_err}")
+
+        # Add silence buffer at the beginning and end so video text doesn't get cut off
+        start_silence = AudioSegment.silent(duration=1000)
+        end_silence = AudioSegment.silent(duration=1500)
+        audio = start_silence + audio + end_silence
+        
+        out_data = io.BytesIO()
+        audio.export(out_data, format="mp3")
+        out_data.seek(0)
+        return out_data
+    except Exception as e:
+        print(f"Warning: Audio processing failed: {e}")
+        audio_data.seek(0)
+        return audio_data
+
+@app.route('/')
+def index():
+    schedule = load_schedule()
+    schedule = sorted(schedule, key=lambda x: x["scheduled_time"], reverse=True)
+    return render_template('index.html', schedule=schedule)
+
+@app.route('/progress')
+def progress():
+    return jsonify(generation_progress)
+
+@app.route('/generate', methods=['POST'])
+def generate():
+    global generation_progress
+    try:
+        generation_progress = {"status": "Starting...", "percent": 0}
+        
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                
-                <!-- Upload Form -->
-                <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-                    <h2 class="text-xl font-bold text-slate-800 mb-6">Schedule New Post</h2>
-                    <form action="/schedule" method="post" enctype="multipart/form-data" class="space-y-5" onsubmit="document.getElementById('submit-btn').innerText = 'Uploading to GitHub...';">
-                        <div>
-                            <label class="block font-semibold text-sm text-slate-600 mb-2">Video File (.mp4)</label>
-                            <input type="file" name="file" accept="video/mp4" required class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-sm text-slate-600 mb-2">Caption</label>
-                            <textarea name="caption" class="w-full border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" rows="4" placeholder="Write your awesome caption..."></textarea>
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-sm text-slate-600 mb-2">Schedule Date & Time</label>
-                            <input type="datetime-local" name="scheduled_time" required class="w-full border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
-                        </div>
-                        <button id="submit-btn" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-3 rounded-xl transition duration-200">Push to GitHub</button>
-                    </form>
-                </div>
-
-                <!-- Schedule List -->
-                <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h2 class="text-xl font-bold text-slate-800 mb-6">Upcoming & Past Posts</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead>
-                                <tr class="text-slate-500 border-b border-slate-200">
-                                    <th class="pb-3 font-semibold">ID</th>
-                                    <th class="pb-3 font-semibold">Scheduled For</th>
-                                    <th class="pb-3 font-semibold">Caption</th>
-                                    <th class="pb-3 font-semibold">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-    """
-    for p in schedule:
-        ig_posted = p.get("instagram_posted", p.get("posted", False))
-        yt_posted = p.get("youtube_posted", False)
-
-        ig_status_color = "text-green-600 bg-green-50" if ig_posted else "text-amber-600 bg-amber-50"
-        ig_status_text = "IG: Posted" if ig_posted else "IG: Pending"
-
-        yt_status_color = "text-blue-600 bg-blue-50" if yt_posted else "text-amber-600 bg-amber-50"
-        yt_status_text = "YT: Posted" if yt_posted else "YT: Pending"
+        text = data.get('text', '').strip()
+        aspect_ratio = data.get('aspect_ratio', '9:16')
+        remove_silence = data.get('remove_silence', False)
         
-        # Truncate caption for display
-        cap = p["caption"]
-        cap_display = cap[:30] + '...' if len(cap) > 30 else cap
+        if not text:
+            return jsonify({'error': 'Text is required'}), 400
+            
+        # 0. Generate Audio from Text
+        generation_progress = {"status": "Generating Audio (TTS)...", "percent": 2}
+        voice = "en-US-JennyNeural"
+        
+        # Async run
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        audio_io = loop.run_until_complete(_generate_audio_bytes(text, voice, "+5%", remove_silence))
+        
+        audio_filename = f"generated_voice_{uuid.uuid4().hex[:8]}.mp3"
+        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
+        with open(audio_path, 'wb') as f:
+            f.write(audio_io.read())
+            
+        lyrics_path = os.path.join(app.config['UPLOAD_FOLDER'], 'lyrics.md')
+        with open(lyrics_path, 'w') as f:
+            f.write(text)
+            
+        timestamps_json = os.path.join(app.config['UPLOAD_FOLDER'], 'aligned_timestamps.json')
+        beats_json = os.path.join(app.config['UPLOAD_FOLDER'], 'beats.json')
+        output_video_filename = f"lyric_video_{aspect_ratio.replace(':', '_')}_{uuid.uuid4().hex[:8]}.mp4"
+        output_video = os.path.join(app.config['GENERATED_FOLDER'], output_video_filename)
+        
+        # 1. Analyze Audio
+        print("Analyzing audio...")
+        generation_progress = {"status": "Analyzing Audio...", "percent": 5}
+        analyze_audio(audio_path, beats_json)
+        
+        # 2. Generate Timestamps
+        print("Generating timestamps...")
+        generation_progress = {"status": "Generating Timestamps (Whisper AI)...", "percent": 15}
+        generate_timestamps(audio_path, timestamps_json, lyrics_path)
+        
+        # 3. Render Video
+        print("Rendering video...")
+        generation_progress = {"status": "Preparing Video Renderer...", "percent": 30}
+        logger = MyBarLogger()
+        create_lyric_video(audio_path, timestamps_json, beats_json, output_video, aspect_ratio=aspect_ratio, max_duration=None, logger=logger)
+        
+        generation_progress = {"status": "Complete!", "percent": 100}
+        
+        return jsonify({
+            'success': True, 
+            'video_url': f"/download/{output_video_filename}",
+            'audio_url': f"/download_audio/{audio_filename}",
+            'filename': output_video_filename
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
-        html_content += f"""
-                                <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
-                                    <td class="py-4 text-slate-600 font-medium">#{p['id']}</td>
-                                    <td class="py-4 text-slate-800">{p['scheduled_time']}</td>
-                                    <td class="py-4 text-slate-600">{cap_display}</td>
-                                    <td class="py-4 flex flex-col gap-1">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold w-fit {ig_status_color}">
-                                            {ig_status_text}
-                                        </span>
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold w-fit {yt_status_color}">
-                                            {yt_status_text}
-                                        </span>
-                                    </td>
-                                </tr>
-        """
-    html_content += """
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content)
-
-@app.post("/schedule")
-async def schedule_post(
-    file: UploadFile = File(...),
-    caption: str = Form(...),
-    scheduled_time: str = Form(...)
-):
+@app.route('/schedule', methods=['POST'])
+def schedule_post():
     if not GITHUB_PAT or not GITHUB_REPO:
-        return HTMLResponse("Error: GITHUB_PAT or GITHUB_REPO is not set in .env file.", status_code=500)
+        return jsonify({"success": False, "error": "GITHUB_PAT or GITHUB_REPO is not set in .env file."}), 500
 
-    # 1. Save file locally temporarily
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
+    data = request.json
+    filename = data.get("filename")
+    caption = data.get("caption")
+    scheduled_time = data.get("scheduled_time")
+
+    if not filename or not caption or not scheduled_time:
+        return jsonify({"success": False, "error": "Missing parameters."}), 400
+
+    file_path = os.path.join(app.config['GENERATED_FOLDER'], filename)
+    if not os.path.exists(file_path):
+        return jsonify({"success": False, "error": "Video file not found."}), 404
+
     # 2. Create a unique tag for the GitHub Release
     tag_name = f"post-{datetime.now().strftime('%Y%md%H%M%S')}"
     
@@ -160,10 +241,10 @@ async def schedule_post(
     
     create_rel_res = requests.post(f"https://api.github.com/repos/{GITHUB_REPO}/releases", json=release_payload, headers=headers)
     if create_rel_res.status_code != 201:
-        return HTMLResponse(f"Error creating GitHub release: {create_rel_res.text}", status_code=500)
+        return jsonify({"success": False, "error": f"Error creating GitHub release: {create_rel_res.text}"}), 500
         
     release_data = create_rel_res.json()
-    upload_url = release_data["upload_url"].split("{")[0] # clean URL template
+    upload_url = release_data["upload_url"].split("{")[0]
     
     # 4. Upload the video asset to the Release
     with open(file_path, "rb") as f:
@@ -175,9 +256,9 @@ async def schedule_post(
         "Accept": "application/vnd.github.v3+json"
     }
     
-    upload_res = requests.post(f"{upload_url}?name={file.filename}", data=video_data, headers=upload_headers)
+    upload_res = requests.post(f"{upload_url}?name={filename}", data=video_data, headers=upload_headers)
     if upload_res.status_code != 201:
-        return HTMLResponse(f"Error uploading video to release: {upload_res.text}", status_code=500)
+        return jsonify({"success": False, "error": f"Error uploading video to release: {upload_res.text}"}), 500
         
     asset_data = upload_res.json()
     download_url = asset_data["browser_download_url"]
@@ -206,13 +287,22 @@ async def schedule_post(
         subprocess.run(["git", "commit", "-m", f"Schedule post #{new_id} via Local Admin UI"], check=True)
         subprocess.run(["git", "push"], check=True)
     except subprocess.CalledProcessError as e:
-        return HTMLResponse(f"Error pushing to git: {e}", status_code=500)
+        return jsonify({"success": False, "error": f"Error pushing to git: {e}"}), 500
     
-    # Cleanup temp video
-    os.remove(file_path)
+    return jsonify({"success": True})
 
-    return RedirectResponse(url="/", status_code=303)
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+@app.route('/download/<filename>')
+def download(filename):
+    safe_filename = secure_filename(filename)
+    path = os.path.join(app.config['GENERATED_FOLDER'], safe_filename)
+    return send_file(path, as_attachment=False)
+
+@app.route('/download_audio/<filename>')
+def download_audio(filename):
+    safe_filename = secure_filename(filename)
+    path = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
+    return send_file(path, as_attachment=False)
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5005)
