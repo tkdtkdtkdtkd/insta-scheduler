@@ -12,8 +12,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d002719/lyric_video_9_16_b9abca8d.mp4",
     "caption": "im so awesome",
     "scheduled_time": "2026-08-05T00:24:00+05:30",
-    "posted": false,
-    "instagram_posted": false,
-    "youtube_posted": false
+    "posted": true,
+    "instagram_posted": true,
+    "youtube_posted": true
   }
 ]
