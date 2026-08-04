@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Voice Gen | Ultra-Realistic TTS</title>
+    <meta name="description" content="Generate ultra-realistic voice audio from text.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+    
+    <main class="container">
+        <header>
+            <h1>Real Voice Gen</h1>
+            <p>Transform text into ultra-realistic speech</p>
+        </header>
+
+        <section class="generator">
+            <div class="input-group">
+                <label for="text-input">Your Text</label>
+                <textarea id="text-input" placeholder="Enter your text here to bring it to life..."></textarea>
+            </div>
+            <div class="input-group checkbox-group">
+                <input type="checkbox" id="remove-silence">
+                <label for="remove-silence">Remove Silences (Fast-paced)</label>
+            </div>
+
+            <button id="generate-btn">
+                <span class="btn-text">Generate MP3</span>
+                <span class="loader hidden"></span>
+            </button>
+
+            <div id="result-container" class="hidden">
+                <h3>Generated Audio</h3>
+                <audio id="audio-player" controls></audio>
+                <a id="download-link" download="voice.mp3" class="secondary-btn">Download MP3</a>
+            </div>
+            <div id="error-message" class="hidden error"></div>
+        </section>
+    </main>
+
+    <script src="script.js?v=3"></script>
+</body>
+</html>

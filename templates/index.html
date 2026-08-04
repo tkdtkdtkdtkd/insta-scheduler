@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Insta Poster & Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="background-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+    
+    <main class="container">
+        <header>
+            <h1>Auto Video Generator & Poster</h1>
+            <p>Generate kinetic lyric videos and schedule them to Instagram & YouTube.</p>
+        </header>
+
+        <section class="generator">
+            <div class="input-group">
+                <label for="text-input">Your Text / Lyrics</label>
+                <textarea id="text-input" placeholder="Enter your text here..."></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label for="caption-input">Post Caption</label>
+                <textarea id="caption-input" placeholder="Write your awesome caption..."></textarea>
+            </div>
+
+            <div class="input-group">
+                <label for="scheduled-time">Schedule Date & Time</label>
+                <input type="datetime-local" id="scheduled-time" required>
+            </div>
+
+            <div class="input-group checkbox-group">
+                <input type="checkbox" id="remove-silence">
+                <label for="remove-silence">Remove Silences in TTS (Fast-paced)</label>
+            </div>
+
+            <button id="generate-btn">
+                <span class="btn-text">Generate Video & Preview</span>
+                <span class="loader hidden"></span>
+            </button>
+            
+            <div id="status-panel" class="hidden" style="margin-top: 20px;">
+                <div class="progress-bar-container" style="background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%; height: 5px; background: var(--primary); transition: width 0.3s;"></div>
+                </div>
+                <p id="progress-text" style="text-align: center; margin-top: 10px; font-size: 0.9rem;">Starting...</p>
+            </div>
+
+            <div id="result-container" class="hidden">
+                <h3>Preview Generated Video</h3>
+                <video id="video-player" controls style="width: 100%; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--glass-border);"></video>
+                
+                <button id="schedule-btn" style="background: var(--accent); margin-top: 10px;">
+                    <span class="btn-text">Schedule to Instagram & YouTube</span>
+                    <span class="loader hidden" id="schedule-loader"></span>
+                </button>
+            </div>
+            
+            <div id="schedule-success" class="hidden success-message" style="margin-top: 15px; color: #4ade80; text-align: center; font-weight: bold;">
+                Post scheduled successfully!
+            </div>
+            
+            <div id="error-message" class="hidden error"></div>
+        </section>
+
+        <!-- Schedule List -->
+        <section class="schedule-list" style="margin-top: 40px; background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <h2>Scheduled Posts</h2>
+            {% if schedule %}
+            <table style="width: 100%; text-align: left; margin-top: 15px; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                        <th style="padding-bottom: 10px;">ID</th>
+                        <th style="padding-bottom: 10px;">Scheduled For</th>
+                        <th style="padding-bottom: 10px;">Caption</th>
+                        <th style="padding-bottom: 10px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in schedule %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <td style="padding: 10px 0;">#{{ p.id }}</td>
+                        <td style="padding: 10px 0;">{{ p.scheduled_time }}</td>
+                        <td style="padding: 10px 0;">{{ p.caption[:30] + '...' if p.caption|length > 30 else p.caption }}</td>
+                        <td style="padding: 10px 0; display: flex; flex-direction: column; gap: 4px;">
+                            {% set ig_posted = p.get('instagram_posted', p.get('posted', False)) %}
+                            {% set yt_posted = p.get('youtube_posted', False) %}
+                            
+                            <span style="color: {{ '#4ade80' if ig_posted else '#facc15' }}; font-weight: bold; font-size: 0.85rem;">
+                                IG: {{ 'Posted' if ig_posted else 'Pending' }}
+                            </span>
+                            <span style="color: {{ '#60a5fa' if yt_posted else '#facc15' }}; font-weight: bold; font-size: 0.85rem;">
+                                YT: {{ 'Posted' if yt_posted else 'Pending' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="margin-top: 15px; color: rgba(255,255,255,0.6);">No posts scheduled yet.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

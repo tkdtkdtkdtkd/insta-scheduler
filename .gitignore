@@ -1,0 +1,7 @@
+__pycache__/
+.env
+uploads/
+generated/
+*.mp4
+*.mp3
+*.pyc
