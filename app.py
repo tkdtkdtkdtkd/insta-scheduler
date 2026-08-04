@@ -89,8 +89,14 @@ def read_root():
                             <tbody>
     """
     for p in schedule:
-        status_color = "text-green-600 bg-green-50" if p["posted"] else "text-amber-600 bg-amber-50"
-        status_text = "Posted" if p["posted"] else "Pending"
+        ig_posted = p.get("instagram_posted", p.get("posted", False))
+        yt_posted = p.get("youtube_posted", False)
+
+        ig_status_color = "text-green-600 bg-green-50" if ig_posted else "text-amber-600 bg-amber-50"
+        ig_status_text = "IG: Posted" if ig_posted else "IG: Pending"
+
+        yt_status_color = "text-blue-600 bg-blue-50" if yt_posted else "text-amber-600 bg-amber-50"
+        yt_status_text = "YT: Posted" if yt_posted else "YT: Pending"
         
         # Truncate caption for display
         cap = p["caption"]
@@ -101,9 +107,12 @@ def read_root():
                                     <td class="py-4 text-slate-600 font-medium">#{p['id']}</td>
                                     <td class="py-4 text-slate-800">{p['scheduled_time']}</td>
                                     <td class="py-4 text-slate-600">{cap_display}</td>
-                                    <td class="py-4">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold {status_color}">
-                                            {status_text}
+                                    <td class="py-4 flex flex-col gap-1">
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold w-fit {ig_status_color}">
+                                            {ig_status_text}
+                                        </span>
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold w-fit {yt_status_color}">
+                                            {yt_status_text}
                                         </span>
                                     </td>
                                 </tr>
@@ -184,7 +193,9 @@ async def schedule_post(
         "video_url": download_url,
         "caption": caption,
         "scheduled_time": parsed_time,
-        "posted": False
+        "posted": False,
+        "instagram_posted": False,
+        "youtube_posted": False
     })
     
     save_schedule(schedule)

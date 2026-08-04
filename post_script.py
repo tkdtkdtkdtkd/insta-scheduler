@@ -3,10 +3,18 @@ import json
 from datetime import datetime, timezone
 import requests
 import time
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 
 # Load secrets from GitHub environment variables
 ACCESS_TOKEN = os.environ.get("META_ACCESS_TOKEN")
 IG_USER_ID = os.environ.get("IG_USER_ID")
+
+YOUTUBE_CLIENT_ID = os.environ.get("YOUTUBE_CLIENT_ID")
+YOUTUBE_CLIENT_SECRET = os.environ.get("YOUTUBE_CLIENT_SECRET")
+YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN")
+
 SCHEDULE_FILE = "schedule.json"
 
 def load_schedule():
@@ -63,7 +71,58 @@ def publish_reel(video_url, caption):
     
     return pub_result['id']
 
-from datetime import datetime, timezone
+def publish_youtube_short(video_url, caption):
+    if not YOUTUBE_CLIENT_ID or not YOUTUBE_CLIENT_SECRET or not YOUTUBE_REFRESH_TOKEN:
+        raise Exception("YouTube credentials are missing.")
+
+    local_filename = f"temp_youtube_{int(time.time())}.mp4"
+    r = requests.get(video_url, stream=True)
+    with open(local_filename, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024*1024):
+            if chunk:
+                f.write(chunk)
+    
+    try:
+        creds = Credentials(
+            token=None,
+            refresh_token=YOUTUBE_REFRESH_TOKEN,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=YOUTUBE_CLIENT_ID,
+            client_secret=YOUTUBE_CLIENT_SECRET
+        )
+
+        youtube = build("youtube", "v3", credentials=creds, cache_discovery=False)
+
+        title = caption.split('\n')[0][:100]
+        if not title.strip():
+            title = "YouTube Short"
+        
+        body = {
+            "snippet": {
+                "title": title,
+                "description": caption + "\n\n#Shorts",
+                "tags": ["shorts", "video"],
+                "categoryId": "22" # 22 is People & Blogs
+            },
+            "status": {
+                "privacyStatus": "public",
+                "selfDeclaredMadeForKids": False
+            }
+        }
+
+        media = MediaFileUpload(local_filename, chunksize=-1, resumable=True, mimetype="video/mp4")
+
+        request = youtube.videos().insert(
+            part="snippet,status",
+            body=body,
+            media_body=media
+        )
+
+        response = request.execute()
+        return response.get("id")
+    finally:
+        if os.path.exists(local_filename):
+            os.remove(local_filename)
 
 def main():
     schedule = load_schedule()
@@ -71,7 +130,10 @@ def main():
     updated = False
 
     for item in schedule:
-        if not item["posted"]:
+        ig_posted = item.get("instagram_posted", item.get("posted", False))
+        yt_posted = item.get("youtube_posted", False)
+
+        if not ig_posted or not yt_posted:
             target_time = datetime.fromisoformat(item["scheduled_time"])
             if target_time.tzinfo is None:
                 from datetime import timedelta
@@ -79,14 +141,28 @@ def main():
             
             # If current time has reached or passed the scheduled time
             if now >= target_time:
-                print(f"Publishing post ID {item['id']}...")
-                try:
-                    publish_reel(item["video_url"], item["caption"])
-                    item["posted"] = True
-                    updated = True
-                    print(f"Successfully posted item {item['id']}!")
-                except Exception as e:
-                    print(f"Error posting item {item['id']}: {e}")
+                # Instagram
+                if not ig_posted:
+                    print(f"Publishing post ID {item['id']} to Instagram...")
+                    try:
+                        publish_reel(item["video_url"], item["caption"])
+                        item["instagram_posted"] = True
+                        item["posted"] = True # For backwards compatibility
+                        updated = True
+                        print(f"Successfully posted item {item['id']} to Instagram!")
+                    except Exception as e:
+                        print(f"Error posting item {item['id']} to Instagram: {e}")
+                
+                # YouTube
+                if not yt_posted:
+                    print(f"Publishing post ID {item['id']} to YouTube...")
+                    try:
+                        publish_youtube_short(item["video_url"], item["caption"])
+                        item["youtube_posted"] = True
+                        updated = True
+                        print(f"Successfully posted item {item['id']} to YouTube!")
+                    except Exception as e:
+                        print(f"Error posting item {item['id']} to YouTube: {e}")
 
     if updated:
         save_schedule(schedule)
