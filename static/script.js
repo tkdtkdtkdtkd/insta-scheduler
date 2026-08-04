@@ -153,3 +153,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+async function deletePost(id) {
+    if (!confirm("Are you sure you want to cancel and delete this scheduled post?")) return;
+    
+    try {
+        const response = await fetch(`/delete_schedule/${id}`, { method: 'POST' });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            alert("Error: " + (data.error || "Failed to delete post"));
+        } else {
+            window.location.reload();
+        }
+    } catch (err) {
+        alert("Error: " + err.message);
+    }
+}

@@ -291,6 +291,31 @@ def schedule_post():
     
     return jsonify({"success": True})
 
+@app.route('/delete_schedule/<int:post_id>', methods=['POST'])
+def delete_schedule(post_id):
+    schedule = load_schedule()
+    
+    post_index = next((index for (index, d) in enumerate(schedule) if d["id"] == post_id), None)
+    
+    if post_index is None:
+        return jsonify({"success": False, "error": "Post not found."}), 404
+        
+    post = schedule[post_index]
+    if post.get("posted") or (post.get("instagram_posted") and post.get("youtube_posted")):
+        return jsonify({"success": False, "error": "Cannot delete a post that has already been published."}), 400
+        
+    del schedule[post_index]
+    save_schedule(schedule)
+    
+    try:
+        subprocess.run(["git", "add", "schedule.json"], check=True)
+        subprocess.run(["git", "commit", "-m", f"Delete scheduled post #{post_id} via Local Admin UI"], check=True)
+        subprocess.run(["git", "push"], check=True)
+    except subprocess.CalledProcessError as e:
+        return jsonify({"success": False, "error": f"Error pushing to git: {e}"}), 500
+        
+    return jsonify({"success": True})
+
 
 @app.route('/download/<filename>')
 def download(filename):

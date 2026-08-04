@@ -98,6 +98,9 @@
                             <span style="color: {{ '#60a5fa' if yt_posted else '#facc15' }}; font-weight: bold; font-size: 0.85rem;">
                                 YT: {{ 'Posted' if yt_posted else 'Pending' }}
                             </span>
+                            {% if not ig_posted or not yt_posted %}
+                            <button onclick="deletePost({{ p.id }})" style="margin-top: 5px; background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='white';" onmouseout="this.style.background='transparent'; this.style.color='#ef4444';">Cancel / Delete</button>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
