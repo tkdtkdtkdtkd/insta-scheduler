@@ -215,9 +215,8 @@ def schedule_post():
     data = request.json
     filename = data.get("filename")
     caption = data.get("caption")
-    scheduled_time = data.get("scheduled_time")
 
-    if not filename or not caption or not scheduled_time:
+    if not filename or not caption:
         return jsonify({"success": False, "error": "Missing parameters."}), 400
 
     file_path = os.path.join(app.config['GENERATED_FOLDER'], filename)
@@ -266,8 +265,29 @@ def schedule_post():
     # 5. Update schedule.json
     schedule = load_schedule()
     new_id = get_next_id(schedule)
-    local_time = datetime.fromisoformat(scheduled_time).astimezone()
-    parsed_time = local_time.isoformat()
+    
+    import random
+    from datetime import timedelta
+    latest_date = None
+    for item in schedule:
+        try:
+            dt = datetime.fromisoformat(item["scheduled_time"])
+            if latest_date is None or dt.date() > latest_date:
+                latest_date = dt.date()
+        except:
+            pass
+            
+    today = datetime.now().astimezone().date()
+    if latest_date is None or latest_date < today:
+        next_date = today
+    else:
+        next_date = latest_date + timedelta(days=1)
+        
+    random_hour = random.choice([11, 12])
+    random_minute = random.randint(0, 59)
+    random_second = random.randint(0, 59)
+    scheduled_dt = datetime.combine(next_date, datetime.min.time()).replace(hour=random_hour, minute=random_minute, second=random_second)
+    parsed_time = scheduled_dt.astimezone().isoformat()
     
     schedule.append({
         "id": new_id,

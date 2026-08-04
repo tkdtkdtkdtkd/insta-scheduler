@@ -40,8 +40,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     generateBtn.addEventListener('click', async () => {
         const text = textInput.value.trim();
+        const caption = captionInput.value;
         if (!text) {
             showError("Please enter some text!");
+            return;
+        }
+        if (!caption) {
+            showError("Please provide a caption before scheduling.");
             return;
         }
 
@@ -78,78 +83,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.error || 'Generation failed');
             }
 
-            // Success
+            // Success Generation
             progressBar.style.width = "100%";
-            progressText.textContent = "Complete!";
+            progressText.textContent = "Video Complete! Auto-Scheduling...";
             
             videoPlayer.src = data.video_url;
             generatedFilename = data.filename;
             
             resultContainer.classList.remove('hidden');
-            
-        } catch (err) {
-            clearInterval(pollInterval);
-            showError(err.message);
-            statusPanel.classList.add('hidden');
-        } finally {
-            generateBtn.disabled = false;
-            generateBtn.querySelector('.btn-text').textContent = "Generate Video & Preview";
-            generateBtn.querySelector('.loader').classList.add('hidden');
-        }
-    });
 
-    scheduleBtn.addEventListener('click', async () => {
-        const caption = captionInput.value;
-        const scheduledTime = scheduledTimeInput.value;
-        
-        if (!caption || !scheduledTime) {
-            showError("Please provide a caption and select a scheduled time.");
-            return;
-        }
-
-        if (!generatedFilename) {
-            showError("No generated video found.");
-            return;
-        }
-
-        hideError();
-        scheduleBtn.disabled = true;
-        scheduleBtn.querySelector('.btn-text').textContent = "Scheduling...";
-        const loader = document.getElementById('schedule-loader');
-        if(loader) loader.classList.remove('hidden');
-
-        try {
-            const response = await fetch('/schedule', {
+            // Auto-Schedule
+            const scheduleResponse = await fetch('/schedule', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     filename: generatedFilename,
-                    caption: caption,
-                    scheduled_time: scheduledTime
+                    caption: caption
                 })
             });
 
-            const data = await response.json();
+            const scheduleData = await scheduleResponse.json();
             
-            if (!response.ok || !data.success) {
-                throw new Error(data.error || 'Scheduling failed');
+            if (!scheduleResponse.ok || !scheduleData.success) {
+                throw new Error(scheduleData.error || 'Scheduling failed');
             }
 
             scheduleSuccess.classList.remove('hidden');
+            progressText.textContent = "Scheduled Successfully!";
             
             // Reload page after a delay to show updated schedule
             setTimeout(() => {
                 window.location.reload();
-            }, 1500);
+            }, 3000);
 
         } catch (err) {
+            clearInterval(pollInterval);
             showError(err.message);
+            statusPanel.classList.add('hidden');
         } finally {
-            scheduleBtn.disabled = false;
-            scheduleBtn.querySelector('.btn-text').textContent = "Schedule to Instagram & YouTube";
-            if(loader) loader.classList.add('hidden');
+            generateBtn.disabled = false;
+            generateBtn.querySelector('.btn-text').textContent = "Generate & Auto-Schedule";
+            generateBtn.querySelector('.loader').classList.add('hidden');
         }
     });
 });

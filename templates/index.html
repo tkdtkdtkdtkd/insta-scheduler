@@ -30,10 +30,7 @@
                 <textarea id="caption-input" placeholder="Write your awesome caption..."></textarea>
             </div>
 
-            <div class="input-group">
-                <label for="scheduled-time">Schedule Date & Time</label>
-                <input type="datetime-local" id="scheduled-time" required>
-            </div>
+
 
             <div class="input-group checkbox-group">
                 <input type="checkbox" id="remove-silence">
@@ -41,7 +38,7 @@
             </div>
 
             <button id="generate-btn">
-                <span class="btn-text">Generate Video & Preview</span>
+                <span class="btn-text">Generate & Auto-Schedule</span>
                 <span class="loader hidden"></span>
             </button>
             
@@ -55,11 +52,6 @@
             <div id="result-container" class="hidden">
                 <h3>Preview Generated Video</h3>
                 <video id="video-player" controls style="width: 100%; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--glass-border);"></video>
-                
-                <button id="schedule-btn" style="background: var(--accent); margin-top: 10px;">
-                    <span class="btn-text">Schedule to Instagram & YouTube</span>
-                    <span class="loader hidden" id="schedule-loader"></span>
-                </button>
             </div>
             
             <div id="schedule-success" class="hidden success-message" style="margin-top: 15px; color: #4ade80; text-align: center; font-weight: bold;">
