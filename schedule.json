@@ -60,5 +60,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 9,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d194428/lyric_video_9_16_5a7fae2f.mp4",
+    "caption": "caution, biggest scam of the century",
+    "scheduled_time": "2026-08-11T11:24:31+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
