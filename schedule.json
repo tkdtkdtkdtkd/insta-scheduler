@@ -69,5 +69,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 10,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d212305/lyric_video_9_16_3f7364cd.mp4",
+    "caption": "i am the real sleeping beauty",
+    "scheduled_time": "2026-08-12T12:31:40+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
