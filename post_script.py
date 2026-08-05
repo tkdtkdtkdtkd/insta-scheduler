@@ -6,6 +6,7 @@ import time
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+import cv2
 
 # Load secrets from GitHub environment variables
 ACCESS_TOKEN = os.environ.get("META_ACCESS_TOKEN")
@@ -27,7 +28,7 @@ def save_schedule(data):
     with open(SCHEDULE_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
-def publish_reel(video_url, caption):
+def publish_reel(video_url, caption, thumb_offset_ms=None):
     # Step 1: Create Container
     container_url = f"https://graph.facebook.com/v21.0/{IG_USER_ID}/media"
     payload = {
@@ -36,6 +37,9 @@ def publish_reel(video_url, caption):
         'caption': caption,
         'access_token': ACCESS_TOKEN
     }
+    if thumb_offset_ms:
+        payload['thumb_offset'] = str(thumb_offset_ms)
+        
     response = requests.post(container_url, data=payload)
     result = response.json()
     if 'id' not in result:
@@ -71,17 +75,10 @@ def publish_reel(video_url, caption):
     
     return pub_result['id']
 
-def publish_youtube_short(video_url, caption):
+def publish_youtube_short(local_filename, caption, thumbnail_path=None):
     if not YOUTUBE_CLIENT_ID or not YOUTUBE_CLIENT_SECRET or not YOUTUBE_REFRESH_TOKEN:
         raise Exception("YouTube credentials are missing.")
 
-    local_filename = f"temp_youtube_{int(time.time())}.mp4"
-    r = requests.get(video_url, stream=True)
-    with open(local_filename, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024*1024):
-            if chunk:
-                f.write(chunk)
-    
     try:
         creds = Credentials(
             token=None,
@@ -119,10 +116,20 @@ def publish_youtube_short(video_url, caption):
         )
 
         response = request.execute()
-        return response.get("id")
+        video_id = response.get("id")
+        
+        if thumbnail_path and os.path.exists(thumbnail_path):
+            try:
+                youtube.thumbnails().set(
+                    videoId=video_id,
+                    media_body=MediaFileUpload(thumbnail_path)
+                ).execute()
+            except Exception as e:
+                print(f"Could not set YouTube thumbnail: {e}")
+                
+        return video_id
     finally:
-        if os.path.exists(local_filename):
-            os.remove(local_filename)
+        pass
 
 def main():
     schedule = load_schedule()
@@ -141,11 +148,39 @@ def main():
             
             # If current time has reached or passed the scheduled time
             if now >= target_time:
+                local_filename = f"temp_vid_{int(time.time())}.mp4"
+                thumb_filename = f"thumb_{int(time.time())}.jpg"
+                thumb_offset_ms = None
+                
+                print("Downloading video for processing...")
+                try:
+                    r = requests.get(item["video_url"], stream=True)
+                    with open(local_filename, 'wb') as f:
+                        for chunk in r.iter_content(chunk_size=1024*1024):
+                            if chunk:
+                                f.write(chunk)
+                                
+                    cap = cv2.VideoCapture(local_filename)
+                    if cap.isOpened():
+                        fps = cap.get(cv2.CAP_PROP_FPS)
+                        total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+                        if fps > 0 and total_frames > 0:
+                            duration_ms = (total_frames / fps) * 1000
+                            thumb_offset_ms = int(duration_ms / 2)
+                            
+                            cap.set(cv2.CAP_PROP_POS_MSEC, thumb_offset_ms)
+                            ret, frame = cap.read()
+                            if ret:
+                                cv2.imwrite(thumb_filename, frame)
+                    cap.release()
+                except Exception as e:
+                    print("Error processing video for thumbnail:", e)
+
                 # Instagram
                 if not ig_posted:
                     print(f"Publishing post ID {item['id']} to Instagram...")
                     try:
-                        publish_reel(item["video_url"], item["caption"])
+                        publish_reel(item["video_url"], item["caption"], thumb_offset_ms=thumb_offset_ms)
                         item["instagram_posted"] = True
                         item["posted"] = True # For backwards compatibility
                         updated = True
@@ -157,12 +192,17 @@ def main():
                 if not yt_posted:
                     print(f"Publishing post ID {item['id']} to YouTube...")
                     try:
-                        publish_youtube_short(item["video_url"], item["caption"])
+                        publish_youtube_short(local_filename, item["caption"], thumbnail_path=thumb_filename)
                         item["youtube_posted"] = True
                         updated = True
                         print(f"Successfully posted item {item['id']} to YouTube!")
                     except Exception as e:
                         print(f"Error posting item {item['id']} to YouTube: {e}")
+                        
+                if os.path.exists(local_filename):
+                    os.remove(local_filename)
+                if os.path.exists(thumb_filename):
+                    os.remove(thumb_filename)
 
     if updated:
         save_schedule(schedule)
