@@ -73,7 +73,7 @@ async def _generate_audio_bytes(text, voice, rate):
         audio = AudioSegment.from_mp3(audio_data)
         
         # Always remove long silences but leave a slightly longer padding than before
-        chunks = split_on_silence(audio, min_silence_len=100, silence_thresh=-45, keep_silence=120)
+        chunks = split_on_silence(audio, min_silence_len=100, silence_thresh=-45, keep_silence=175)
         if chunks:
             audio = AudioSegment.empty()
             for chunk in chunks:
