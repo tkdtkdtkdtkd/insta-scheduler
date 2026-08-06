@@ -305,6 +305,7 @@ def schedule_post():
     try:
         subprocess.run(["git", "add", "schedule.json"], check=True)
         subprocess.run(["git", "commit", "-m", f"Schedule post #{new_id} via Local Admin UI"], check=True)
+        subprocess.run(["git", "pull", "--rebase"], check=True)
         subprocess.run(["git", "push"], check=True)
     except subprocess.CalledProcessError as e:
         return jsonify({"success": False, "error": f"Error pushing to git: {e}"}), 500
@@ -330,6 +331,7 @@ def delete_schedule(post_id):
     try:
         subprocess.run(["git", "add", "schedule.json"], check=True)
         subprocess.run(["git", "commit", "-m", f"Delete scheduled post #{post_id} via Local Admin UI"], check=True)
+        subprocess.run(["git", "pull", "--rebase"], check=True)
         subprocess.run(["git", "push"], check=True)
     except subprocess.CalledProcessError as e:
         return jsonify({"success": False, "error": f"Error pushing to git: {e}"}), 500
