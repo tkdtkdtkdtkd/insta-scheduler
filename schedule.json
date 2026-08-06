@@ -21,9 +21,9 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d141046/lyric_video_9_16_f504aa69.mp4",
     "caption": "i look forward to my future content",
     "scheduled_time": "2026-08-06T11:38:14+05:30",
-    "posted": false,
-    "instagram_posted": false,
-    "youtube_posted": false
+    "posted": true,
+    "instagram_posted": true,
+    "youtube_posted": true
   },
   {
     "id": 5,
