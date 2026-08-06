@@ -195,5 +195,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 24,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d185005/lyric_video_9_16_2fa2c6db.mp4",
+    "caption": "ai is getting too smart",
+    "scheduled_time": "2026-08-26T11:35:52+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
