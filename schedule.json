@@ -213,5 +213,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 26,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d191852/lyric_video_9_16_6657f500.mp4",
+    "caption": "idk why im doing motivation, im sorry abt the last post guys",
+    "scheduled_time": "2026-08-28T11:47:09+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
