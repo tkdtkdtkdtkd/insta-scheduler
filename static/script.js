@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const textInput = document.getElementById('text-input');
     const captionInput = document.getElementById('caption-input');
     const scheduledTimeInput = document.getElementById('scheduled-time');
-    const removeSilenceCheckbox = document.getElementById('remove-silence');
     
     const statusPanel = document.getElementById('status-panel');
     const progressBar = document.getElementById('progress-bar');
@@ -70,8 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     text: text,
-                    aspect_ratio: '9:16',
-                    remove_silence: removeSilenceCheckbox.checked
+                    aspect_ratio: '9:16'
                 })
             });
 

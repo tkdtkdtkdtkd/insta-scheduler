@@ -61,7 +61,7 @@ def get_next_id(schedule):
         return 1
     return max(item["id"] for item in schedule) + 1
 
-async def _generate_audio_bytes(text, voice, rate, remove_silence):
+async def _generate_audio_bytes(text, voice, rate):
     communicate = edge_tts.Communicate(text, voice, rate=rate)
     audio_data = io.BytesIO()
     async for chunk in communicate.stream():
@@ -72,12 +72,12 @@ async def _generate_audio_bytes(text, voice, rate, remove_silence):
     try:
         audio = AudioSegment.from_mp3(audio_data)
         
-        if remove_silence:
-            chunks = split_on_silence(audio, min_silence_len=100, silence_thresh=-45, keep_silence=40)
-            if chunks:
-                audio = AudioSegment.empty()
-                for chunk in chunks:
-                    audio += chunk
+        # Always remove long silences but leave a slightly longer padding than before
+        chunks = split_on_silence(audio, min_silence_len=100, silence_thresh=-45, keep_silence=120)
+        if chunks:
+            audio = AudioSegment.empty()
+            for chunk in chunks:
+                audio += chunk
                     
         # Overlay Background Music
         MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "music")
@@ -150,7 +150,6 @@ def generate():
             
         text = data.get('text', '').strip()
         aspect_ratio = data.get('aspect_ratio', '9:16')
-        remove_silence = data.get('remove_silence', False)
         
         if not text:
             return jsonify({'error': 'Text is required'}), 400
@@ -162,7 +161,7 @@ def generate():
         # Async run
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        audio_io = loop.run_until_complete(_generate_audio_bytes(text, voice, "+5%", remove_silence))
+        audio_io = loop.run_until_complete(_generate_audio_bytes(text, voice, "+5%"))
         
         audio_filename = f"generated_voice_{uuid.uuid4().hex[:8]}.mp3"
         audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
