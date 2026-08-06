@@ -249,5 +249,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 30,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d222917/lyric_video_9_16_76a98507.mp4",
+    "caption": "i am the ONLY productivity guru you should follow",
+    "scheduled_time": "2026-09-01T11:12:55+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
