@@ -104,7 +104,7 @@ def create_lyric_video(audio_path, timestamps_json, beats_json, output_video, as
                 
         return rects
 
-    # Group words into natural scenes (sentences) based on pauses and impact words
+        # Group words into natural scenes (sentences) based on pauses and impact words
     scenes = []
     i = 0
     while i < len(valid_words):
@@ -125,8 +125,12 @@ def create_lyric_video(audio_path, timestamps_json, beats_json, output_video, as
             if (next_w['end'] - next_w['start']) > 0.8:
                 break
                 
+            # Break if previous word ended a sentence
+            if current_scene[-1]['word'].strip().endswith(('.', '?', '!')):
+                break
+                
             # Break if large gap (new sentence)
-            if (next_w['start'] - current_scene[-1]['end']) > 0.4:
+            if (next_w['start'] - current_scene[-1]['end']) > 1.0:
                 break
                 
             current_scene.append(next_w)
@@ -225,11 +229,7 @@ def create_lyric_video(audio_path, timestamps_json, beats_json, output_video, as
             start_t = w_obj['word_data']['start']
             end_t_word = w_obj['word_data']['end']
             
-            # HARD FIX: If the word duration is suspiciously long (> 1.2s), it means Whisper included
-            # a long instrumental gap before the actual singing. Clamp it to at most 0.8s before it ends!
-            # Only do this for the first word of a scene to preserve held notes at the end of lines.
-            if w_obj['word_data'] == scene_words[0] and (end_t_word - start_t) > 1.2:
-                start_t = max(start_t, end_t_word - 0.8)
+            # (Removed the start_t clamping fix that was skipping first words)
                 
             end_t = scene_end_t
             angle = w_obj['angle']
@@ -305,10 +305,14 @@ def create_lyric_video(audio_path, timestamps_json, beats_json, output_video, as
     # Using one of the loaded fonts, small size
     watermark = TextClip("tkdprotocol", fontsize=40, color=wm_color, font=fonts[0]['path'])
     # Low opacity, positioned in the bottom right with a small offset (done via margin or relative position)
-    watermark = watermark.set_opacity(0.3).set_position((W - watermark.w - 30, H - watermark.h - 30)).set_duration(duration)
+    watermark_end = max(0, duration - 2.0)
+    watermark = watermark.set_opacity(0.3).set_position((W - watermark.w - 30, H - watermark.h - 30)).set_start(0).set_end(watermark_end)
+
+    outro_text = TextClip("TKD protocol", fontsize=100, color='black', font=fonts[0]['path'])
+    outro_text = outro_text.set_position('center').set_start(watermark_end).set_end(duration)
 
     # Combine everything
-    final_video = CompositeVideoClip([bg] + text_clips + [watermark]).set_duration(duration)
+    final_video = CompositeVideoClip([bg] + text_clips + [watermark, outro_text]).set_duration(duration)
     # final_video = final_video.set_audio(audio_clip)
     
     try:

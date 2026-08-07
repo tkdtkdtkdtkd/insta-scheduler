@@ -72,13 +72,11 @@ async def _generate_audio_bytes(text, voice, rate):
     try:
         audio = AudioSegment.from_mp3(audio_data)
         
-        # Always remove long silences but leave a slightly longer padding than before
-        chunks = split_on_silence(audio, min_silence_len=100, silence_thresh=-45, keep_silence=175)
-        if chunks:
-            audio = AudioSegment.empty()
-            for chunk in chunks:
-                audio += chunk
-                    
+        # Remove split_on_silence to prevent cutting off first words/consonants
+        
+        # Add 2 seconds silence at the end for the outro
+        audio = audio + AudioSegment.silent(duration=2000)
+        
         # Overlay Background Music
         MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "music")
         if os.path.exists(MUSIC_DIR):
@@ -89,34 +87,47 @@ async def _generate_audio_bytes(text, voice, rate):
                 music_path = os.path.join(MUSIC_DIR, chosen_music)
                 try:
                     bg_music = AudioSegment.from_mp3(music_path)
-                    speech_len = len(audio)
+                    total_len = len(audio)
+                    speech_len = max(0, total_len - 2000)
                     music_len = len(bg_music)
                     
-                    if music_len > speech_len:
-                        bg_chunk = bg_music[:speech_len]
+                    if music_len > total_len:
+                        bg_chunk = bg_music[:total_len]
                     else:
-                        bg_chunk = bg_music * (speech_len // music_len + 1)
-                        bg_chunk = bg_chunk[:speech_len]
+                        bg_chunk = bg_music * (total_len // music_len + 1)
+                        bg_chunk = bg_chunk[:total_len]
                         
+                    bg_speech = bg_chunk[:speech_len]
+                    bg_outro = bg_chunk[speech_len:]
+                    
                     from pydub.effects import compress_dynamic_range
-                    bg_chunk = compress_dynamic_range(bg_chunk, threshold=-20.0, ratio=4.0)
+                    bg_speech = compress_dynamic_range(bg_speech, threshold=-20.0, ratio=4.0)
                         
                     target_dbfs = -30.0
                     if "luminary" in chosen_music.lower():
                         target_dbfs = -35.0
                         
-                    current_dbfs = bg_chunk.dBFS
+                    current_dbfs = bg_speech.dBFS
                     if current_dbfs != float('-inf'):
                         gain = target_dbfs - current_dbfs
-                        bg_chunk = bg_chunk + gain
+                        bg_speech = bg_speech + gain
+                        
+                    # Outro volume normal/loud
+                    outro_dbfs = bg_outro.dBFS
+                    if outro_dbfs != float('-inf'):
+                        gain_outro = -10.0 - outro_dbfs
+                        bg_outro = bg_outro + gain_outro
+                        
+                    bg_final = bg_speech.append(bg_outro, crossfade=100)
+                    bg_final = bg_final[:total_len]
                     
-                    audio = bg_chunk.overlay(audio)
+                    audio = bg_final.overlay(audio)
                 except Exception as music_err:
                     print(f"Warning: Failed to add music: {music_err}")
 
-        # Add silence buffer at the beginning and end so video text doesn't get cut off
-        start_silence = AudioSegment.silent(duration=1000)
-        end_silence = AudioSegment.silent(duration=1500)
+        # No start silence so it starts immediately
+        start_silence = AudioSegment.silent(duration=0)
+        end_silence = AudioSegment.silent(duration=0)
         audio = start_silence + audio + end_silence
         
         out_data = io.BytesIO()
@@ -282,7 +293,7 @@ def schedule_post():
     else:
         next_date = latest_date + timedelta(days=1)
         
-    random_hour = random.choice([11, 12])
+    random_hour = random.choice([23, 0])
     random_minute = random.randint(0, 59)
     random_second = random.randint(0, 59)
     scheduled_dt = datetime.combine(next_date, datetime.min.time()).replace(hour=random_hour, minute=random_minute, second=random_second)
