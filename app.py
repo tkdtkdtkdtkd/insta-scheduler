@@ -72,7 +72,13 @@ async def _generate_audio_bytes(text, voice, rate):
     try:
         audio = AudioSegment.from_mp3(audio_data)
         
-        # Remove split_on_silence to prevent cutting off first words/consonants
+        # Reduce long silences between sentences to speed up pacing,
+        # but use a high min_silence_len (350ms) to avoid clipping words!
+        chunks = split_on_silence(audio, min_silence_len=350, silence_thresh=-40, keep_silence=200)
+        if chunks:
+            audio = AudioSegment.empty()
+            for chunk in chunks:
+                audio += chunk
         
         # Add 2 seconds silence at the end for the outro
         audio = audio + AudioSegment.silent(duration=2000)
