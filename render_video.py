@@ -180,8 +180,8 @@ def create_lyric_video(audio_path, timestamps_json, beats_json, output_video, as
         else:
             scene_end_t = scene_words[-1]['end'] + 0.5
             
-        # Ensure scene_end_t does not overlap with the 3-second outro
-        scene_end_t = min(scene_end_t, max(0, duration - 3.0))
+        # Ensure scene_end_t does not overlap with the 4-second outro
+        scene_end_t = min(scene_end_t, max(0, duration - 4.0))
             
         word_clips = []
         for word_data in scene_words:
@@ -323,7 +323,7 @@ def create_lyric_video(audio_path, timestamps_json, beats_json, output_video, as
     # Using one of the loaded fonts, small size
     watermark = TextClip("tkdprotocol", fontsize=40, color=wm_color, font=fonts[0]['path'])
     # Low opacity, positioned in the bottom right with a small offset (done via margin or relative position)
-    watermark_end = max(0, duration - 3.0)
+    watermark_end = max(0, duration - 4.0)
     watermark = watermark.set_opacity(0.3).set_position((W - watermark.w - 30, H - watermark.h - 30)).set_start(0).set_end(watermark_end)
 
     outro_text = TextClip("tkdprotocol", fontsize=100, color='black', font=fonts[0]['path'])
