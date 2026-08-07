@@ -285,5 +285,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 34,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d151733/lyric_video_9_16_49cacb26.mp4",
+    "caption": "smh stop being a keyboard warrior guys",
+    "scheduled_time": "2026-09-06T00:00:31+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
