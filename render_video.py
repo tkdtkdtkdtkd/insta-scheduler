@@ -65,8 +65,23 @@ def create_lyric_video(audio_path, timestamps_json, beats_json, output_video, as
     bg = ColorClip(size=(W, H), color=(255, 255, 255)).set_duration(duration)
     
     
-    
-    # Filter words for duration and remove zero-duration spam words!
+    # Fix zero-duration or invalid timestamps from Whisper (usually dropped first words of sentences)
+    for i in range(len(words_data)):
+        w = words_data[i]
+        if w['end'] <= w['start']:
+            # Interpolate start from previous word
+            if i > 0:
+                w['start'] = words_data[i-1]['end']
+            else:
+                w['start'] = 0.0
+                
+            # Interpolate end from next word
+            if i < len(words_data) - 1 and words_data[i+1]['start'] > w['start']:
+                w['end'] = words_data[i+1]['start']
+            else:
+                w['end'] = w['start'] + 0.3
+                
+    # Filter words for duration
     valid_words = [w for w in words_data if w['start'] < duration and w['end'] > w['start']]
     
     # --- BSP Algorithm to split a rectangle into N rectangles ---
