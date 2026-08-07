@@ -79,6 +79,13 @@ async def _generate_audio_bytes(text, voice, rate):
             audio = AudioSegment.empty()
             for chunk in chunks:
                 audio += chunk
+                
+        # Trim leading silence perfectly to eliminate the initial gap
+        from pydub.silence import detect_nonsilent
+        nonsilent_ranges = detect_nonsilent(audio, min_silence_len=50, silence_thresh=-45)
+        if nonsilent_ranges:
+            start_trim = nonsilent_ranges[0][0]
+            audio = audio[start_trim:]
         
         # Add 3 seconds silence at the end for the outro
         audio = audio + AudioSegment.silent(duration=3000)
