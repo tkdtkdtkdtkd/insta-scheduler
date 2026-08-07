@@ -80,8 +80,8 @@ async def _generate_audio_bytes(text, voice, rate):
             for chunk in chunks:
                 audio += chunk
         
-        # Add 2 seconds silence at the end for the outro
-        audio = audio + AudioSegment.silent(duration=2000)
+        # Add 3 seconds silence at the end for the outro
+        audio = audio + AudioSegment.silent(duration=3000)
         
         # Overlay Background Music
         MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "music")
@@ -94,7 +94,7 @@ async def _generate_audio_bytes(text, voice, rate):
                 try:
                     bg_music = AudioSegment.from_mp3(music_path)
                     total_len = len(audio)
-                    speech_len = max(0, total_len - 2000)
+                    speech_len = max(0, total_len - 3000)
                     music_len = len(bg_music)
                     
                     if music_len > total_len:
