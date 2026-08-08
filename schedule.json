@@ -366,5 +366,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 43,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d122445/lyric_video_9_16_9b3e7e9c.mp4",
+    "caption": "ai be going crazy these days",
+    "scheduled_time": "2026-09-14T23:14:42+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
