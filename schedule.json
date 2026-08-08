@@ -39,9 +39,9 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d190459/lyric_video_9_16_5f255a71.mp4",
     "caption": "you can always sneeze better",
     "scheduled_time": "2026-08-09T00:05:36+05:30",
-    "posted": false,
-    "instagram_posted": false,
-    "youtube_posted": false
+    "posted": true,
+    "instagram_posted": true,
+    "youtube_posted": true
   },
   {
     "id": 7,
