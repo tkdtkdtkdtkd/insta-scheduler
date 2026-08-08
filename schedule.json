@@ -348,5 +348,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 41,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d120032/lyric_video_9_16_ca3c2cd6.mp4",
+    "caption": "i would rather kill you with mercy",
+    "scheduled_time": "2026-09-12T00:10:57+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
