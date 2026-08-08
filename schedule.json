@@ -411,5 +411,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 48,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d140847/lyric_video_9_16_e3239f4d.mp4",
+    "caption": "follow me to fix your life",
+    "scheduled_time": "2026-09-19T00:36:36+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
