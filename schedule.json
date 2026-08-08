@@ -402,5 +402,14 @@
     "posted": false,
     "instagram_posted": false,
     "youtube_posted": false
+  },
+  {
+    "id": 47,
+    "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d140333/lyric_video_9_16_fab3f3d0.mp4",
+    "caption": "psycopath is the best personality type",
+    "scheduled_time": "2026-09-18T00:12:19+05:30",
+    "posted": false,
+    "instagram_posted": false,
+    "youtube_posted": false
   }
 ]
