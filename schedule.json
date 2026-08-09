@@ -48,9 +48,9 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d192606/lyric_video_9_16_0efa788c.mp4",
     "caption": "human organs are useful to humans",
     "scheduled_time": "2026-08-10T00:36:21+05:30",
-    "posted": false,
-    "instagram_posted": false,
-    "youtube_posted": false
+    "posted": true,
+    "instagram_posted": true,
+    "youtube_posted": true
   },
   {
     "id": 8,
