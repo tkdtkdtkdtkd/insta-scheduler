@@ -84,8 +84,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d213136/lyric_video_9_16_a1a935c2.mp4",
     "caption": "the golden streamm",
     "scheduled_time": "2026-08-14T00:35:31+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
