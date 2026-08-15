@@ -102,8 +102,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d234958/lyric_video_9_16_65cfc869.mp4",
     "caption": "i am the greenest flag out there",
     "scheduled_time": "2026-08-16T00:50:10+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
