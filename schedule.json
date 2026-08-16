@@ -111,8 +111,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d000249/lyric_video_9_16_0fe0c9ee.mp4",
     "caption": "Narcissistic people are weird.",
     "scheduled_time": "2026-08-17T00:12:01+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
