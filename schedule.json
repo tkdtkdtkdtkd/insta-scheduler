@@ -156,8 +156,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d135107/lyric_video_9_16_85aa4e10.mp4",
     "caption": "ultimate red flag crash course",
     "scheduled_time": "2026-08-22T00:52:50+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
