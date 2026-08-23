@@ -174,8 +174,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d140628/lyric_video_9_16_e7c85089.mp4",
     "caption": "idk why im doing serious posts",
     "scheduled_time": "2026-08-23T23:41:37+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
