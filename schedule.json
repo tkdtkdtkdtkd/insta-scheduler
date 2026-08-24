@@ -183,8 +183,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d181443/lyric_video_9_16_4123a1d5.mp4",
     "caption": "@im_roy_lee\n",
     "scheduled_time": "2026-08-25T00:04:55+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
