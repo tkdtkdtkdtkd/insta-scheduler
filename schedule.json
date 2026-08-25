@@ -192,8 +192,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d184256/lyric_video_9_16_b7e18843.mp4",
     "caption": "i am the greatest creation btw",
     "scheduled_time": "2026-08-25T23:20:26+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
