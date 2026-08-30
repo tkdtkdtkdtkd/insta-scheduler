@@ -237,8 +237,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d221732/lyric_video_9_16_b3f5193e.mp4",
     "caption": "would you rather watch \ud83d\ude2d",
     "scheduled_time": "2026-08-31T00:18:13+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
