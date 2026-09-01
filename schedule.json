@@ -255,8 +255,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d222917/lyric_video_9_16_76a98507.mp4",
     "caption": "i am the ONLY productivity guru you should follow",
     "scheduled_time": "2026-09-02T00:12:55+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
