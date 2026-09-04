@@ -282,8 +282,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d224502/lyric_video_9_16_c79f8d94.mp4",
     "caption": "huff.. another serious video bc im out of jokes",
     "scheduled_time": "2026-09-04T23:43:44+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
