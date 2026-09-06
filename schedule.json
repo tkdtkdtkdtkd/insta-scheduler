@@ -300,8 +300,8 @@
     "video_url": "https://github.com/tkdtkdtkdtkd/insta-scheduler/releases/download/post-202608d162313/lyric_video_9_16_96984948.mp4",
     "caption": "pick me up",
     "scheduled_time": "2026-09-06T23:46:28+05:30",
-    "posted": false,
-    "instagram_posted": false,
+    "posted": true,
+    "instagram_posted": true,
     "youtube_posted": false
   },
   {
